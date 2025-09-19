@@ -102,18 +102,39 @@
       }
 
       /* --- Bottom Controls Bar --- */
-      .controls {
+      .bottom-ui-wrapper {
         position: fixed;
-        bottom: 30px;
+        bottom: 55px;
         left: 0;
         width: 100%;
-        height: var(--controls-height);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .page-indicator {
+        color: #fff;
+        font-family: "Inter", sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        padding: 4px 12px;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        margin-bottom: 17px;
+        text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+      }
+
+      .controls {
+        position: relative;
+        width: 100%;
+        max-width: 500px; /* Match calendar width for alignment */
+        height: auto;
         display: flex;
         justify-content: center;
         align-items: center;
         gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        z-index: 1000;
+        padding: 0 1rem;
         box-sizing: border-box;
       }
 
@@ -220,67 +241,28 @@
       </div>
     </div>
 
-    <div class="controls">
-      <button id="prev-month" class="control-btn"></button>
-      <a
-        href="calendar/template-calendar.pdf"
-        download="template-calendar.pdf"
-        class="download-btn"
-        title="Download PDF"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="7 10 12 15 17 10" />
-          <line x1="12" y1="15" x2="12" y2="3" />
-        </svg>
-      </a>
-      <button id="toggle-zoom-btn" class="zoom-btn">+</button>
-      <button id="fullscreen-btn" class="fullscreen-btn">
-        <svg
-          id="enter-fullscreen-icon"
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path
-            d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
-          />
-        </svg>
-        <svg
-          id="exit-fullscreen-icon"
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          style="display: none"
-        >
-          <path
-            d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"
-          />
-        </svg>
-      </button>
-      <button id="next-month" class="control-btn"></button>
+    <div class="bottom-ui-wrapper">
+        <div id="page-indicator" class="page-indicator"></div>
+        <div class="controls">
+            <button id="prev-month" class="control-btn"></button>
+            <a href="calendar/template-calendar.pdf" download="template-calendar.pdf" class="download-btn" title="Download PDF">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            </a>
+            <button id="toggle-zoom-btn" class="zoom-btn">+</button>
+            <button id="fullscreen-btn" class="fullscreen-btn">
+            <svg id="enter-fullscreen-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+            </svg>
+            <svg id="exit-fullscreen-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+            </svg>
+            </button>
+            <button id="next-month" class="control-btn"></button>
+        </div>
     </div>
 
     <script>
@@ -298,21 +280,12 @@
           "exit-fullscreen-icon"
         );
         const zoomIndicator = document.getElementById("zoom-indicator");
+        const pageIndicator = document.getElementById("page-indicator"); // Get the page indicator element
         const body = document.body;
 
         const monthNames = [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "Mei",
-          "Jun",
-          "Jul",
-          "Ags",
-          "Sep",
-          "Okt",
-          "Nov",
-          "Des",
+          "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", 
+          "Jul", "Ags", "Sep", "Okt", "Nov", "Des"
         ];
 
         const imageUrls = Array.from(
@@ -328,7 +301,9 @@
             pageContent.className = "page-content";
             const imageUrl =
               imageUrls[month] ||
-              `https://placehold.co/500x700/ca262c/FFF?text=Bulan+${month + 1}`;
+              `https://placehold.co/500x700/ca262c/FFF?text=Bulan+${
+                month + 1
+              }`;
             pageContent.style.backgroundImage = `url('${imageUrl}')`;
             page.appendChild(pageContent);
             flipbookContainer.appendChild(page);
@@ -357,7 +332,12 @@
         const now = new Date();
         const currentMonth = now.getMonth();
 
-        function updateButtonLabels(currentPageIndex) {
+        // Combined function to update all UI controls at once
+        function updateUiControls(currentPageIndex) {
+          // Update page indicator text
+          pageIndicator.textContent = `${currentPageIndex + 1} / ${monthNames.length}`;
+            
+          // Update prev/next button state and text
           prevBtn.disabled = currentPageIndex === 0;
           nextBtn.disabled = currentPageIndex === monthNames.length - 1;
 
@@ -369,10 +349,10 @@
         }
 
         pageFlip.turnToPage(currentMonth);
-        updateButtonLabels(currentMonth);
+        updateUiControls(currentMonth); // Initial update
 
         pageFlip.on("flip", (e) => {
-          updateButtonLabels(e.data);
+          updateUiControls(e.data); // Update on every flip
         });
 
         prevBtn.addEventListener("click", () => pageFlip.flipPrev("top"));
@@ -491,7 +471,7 @@
 
         // Mouse events
         document.addEventListener("mousedown", (e) => {
-          if (e.target.closest(".controls")) return;
+          if (e.target.closest(".controls, .bottom-ui-wrapper")) return; // Prevent panning when clicking any bottom UI
           if (startPan(e.clientX, e.clientY)) {
             e.preventDefault();
           }
@@ -511,7 +491,7 @@
         document.addEventListener(
           "touchstart",
           (e) => {
-            if (e.target.closest(".controls")) return;
+            if (e.target.closest(".controls, .bottom-ui-wrapper")) return; // Prevent panning when touching any bottom UI
             const touch = e.touches[0];
             if (startPan(touch.clientX, touch.clientY)) {
               e.preventDefault();
@@ -544,3 +524,4 @@
     </script>
   </body>
 </html>
+
