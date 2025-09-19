@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Calendar Wahana Travel</title>
     <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
       rel="stylesheet"
@@ -28,6 +29,10 @@
         padding: 0px 15px;
         overflow: hidden;
         position: relative;
+      }
+      
+      body.modal-open {
+        overflow: hidden;
       }
 
       /* --- Styling untuk Panning & Zoom --- */
@@ -141,7 +146,7 @@
       .control-btn,
       .zoom-btn,
       .fullscreen-btn,
-      .download-btn {
+      .share-btn {
         flex: 1;
         max-width: 150px;
         padding: 0.75rem;
@@ -166,7 +171,7 @@
       .control-btn:hover,
       .zoom-btn:hover,
       .fullscreen-btn:hover,
-      .download-btn:hover {
+      .share-btn:hover {
         background-color: #f7f7f7;
         border-color: #ccc;
         transform: translateY(-2px);
@@ -177,7 +182,7 @@
       .control-btn:active,
       .zoom-btn:active,
       .fullscreen-btn:active,
-      .download-btn:active {
+      .share-btn:active {
         transform: translateY(0px) scale(0.98);
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
           0 2px 4px -1px rgba(0, 0, 0, 0.04);
@@ -185,14 +190,14 @@
 
       .zoom-btn,
       .fullscreen-btn,
-      .download-btn {
+      .share-btn {
         max-width: 60px;
         font-size: 1.5rem;
         line-height: 1;
       }
 
       .fullscreen-btn svg,
-      .download-btn svg {
+      .share-btn svg {
         width: 24px;
         height: 24px;
       }
@@ -228,6 +233,147 @@
       .zoom-indicator.visible {
         opacity: 1;
       }
+      
+      /* --- Share Modal Styles --- */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+      .modal-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+      }
+      .share-modal {
+        background-color: #fff;
+        padding: 24px;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 480px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transform: scale(0.95);
+        transition: transform 0.3s ease;
+      }
+      .modal-overlay.visible .share-modal {
+          transform: scale(1);
+      }
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .modal-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .modal-close-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #888;
+        padding: 4px;
+        line-height: 1;
+      }
+      .modal-close-btn:hover {
+        color: #333;
+      }
+      .modal-content {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+      .share-section {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+      .qr-code-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      #qrcode {
+        border: 1px solid #eee;
+        padding: 8px;
+        border-radius: 8px;
+      }
+      .qr-code-container span {
+        font-size: 0.8rem;
+        color: #666;
+      }
+      .share-link-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 8px;
+      }
+      .share-link-container p {
+        margin: 0;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .share-link-input-wrapper {
+        display: flex;
+      }
+      #share-link-input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px 0 0 8px;
+        font-family: 'Inter', sans-serif;
+        background-color: #f9f9f9;
+        color: #333;
+        border-right: none;
+      }
+      #copy-link-btn {
+        padding: 10px 16px;
+        border: 1px solid #ddd;
+        background-color: #f1f1f1;
+        cursor: pointer;
+        border-radius: 0 8px 8px 0;
+        font-weight: 600;
+        transition: background-color 0.2s;
+      }
+      #copy-link-btn:hover {
+        background-color: #e7e7e7;
+      }
+      .modal-divider {
+        height: 1px;
+        background-color: #eee;
+        margin: 0;
+      }
+      .download-section a {
+        display: block;
+        width: 100%;
+        padding: 14px;
+        background-color: #ca262c;
+        color: #fff;
+        text-align: center;
+        text-decoration: none;
+        font-weight: 700;
+        border-radius: 12px;
+        transition: background-color 0.2s;
+      }
+      .download-section a:hover {
+        background-color: #b21e24;
+      }
     </style>
   </head>
   <body>
@@ -240,28 +386,51 @@
         <div class="flip-book" id="calendar-flipbook"></div>
       </div>
     </div>
-
+    
     <div class="bottom-ui-wrapper">
         <div id="page-indicator" class="page-indicator"></div>
         <div class="controls">
             <button id="prev-month" class="control-btn"></button>
-            <a href="calendar/template-calendar.pdf" download="template-calendar.pdf" class="download-btn" title="Download PDF">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            </a>
+            <button class="share-btn" id="open-share-btn" title="Share or Download">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
+            </button>
             <button id="toggle-zoom-btn" class="zoom-btn">+</button>
             <button id="fullscreen-btn" class="fullscreen-btn">
-            <svg id="enter-fullscreen-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-            </svg>
-            <svg id="exit-fullscreen-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-            </svg>
+                <svg id="enter-fullscreen-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" /></svg>
+                <svg id="exit-fullscreen-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" /></svg>
             </button>
             <button id="next-month" class="control-btn"></button>
+        </div>
+    </div>
+
+    <div id="share-modal-overlay" class="modal-overlay">
+        <div class="share-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
+                    <span>Share & Download</span>
+                </h2>
+                <button id="modal-close-btn" class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div class="share-section">
+                    <div class="qr-code-container">
+                        <div id="qrcode"></div>
+                        <span>QR Code</span>
+                    </div>
+                    <div class="share-link-container">
+                        <p>Share Link:</p>
+                        <div class="share-link-input-wrapper">
+                            <input type="text" id="share-link-input" readonly>
+                            <button id="copy-link-btn">Copy</button>
+                        </div>
+                    </div>
+                </div>
+                <hr class="modal-divider">
+                <div class="download-section">
+                    <a href="calendar/template-calendar.pdf" download="template-calendar.pdf">Download PDF</a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -280,8 +449,18 @@
           "exit-fullscreen-icon"
         );
         const zoomIndicator = document.getElementById("zoom-indicator");
-        const pageIndicator = document.getElementById("page-indicator"); // Get the page indicator element
+        const pageIndicator = document.getElementById("page-indicator");
         const body = document.body;
+
+        // --- Modal Elements ---
+        const shareModalOverlay = document.getElementById("share-modal-overlay");
+        const openShareBtn = document.getElementById("open-share-btn");
+        const modalCloseBtn = document.getElementById("modal-close-btn");
+        const shareLinkInput = document.getElementById("share-link-input");
+        const copyLinkBtn = document.getElementById("copy-link-btn");
+        const qrcodeContainer = document.getElementById("qrcode");
+        let qrCode = null;
+
 
         const monthNames = [
           "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", 
@@ -332,31 +511,77 @@
         const now = new Date();
         const currentMonth = now.getMonth();
 
-        // Combined function to update all UI controls at once
         function updateUiControls(currentPageIndex) {
-          // Update page indicator text
           pageIndicator.textContent = `${currentPageIndex + 1} / ${monthNames.length}`;
-            
-          // Update prev/next button state and text
           prevBtn.disabled = currentPageIndex === 0;
           nextBtn.disabled = currentPageIndex === monthNames.length - 1;
-
           const prevMonthIndex = (currentPageIndex - 1 + 12) % 12;
           const nextMonthIndex = (currentPageIndex + 1) % 12;
-
           prevBtn.textContent = `‹ ${monthNames[prevMonthIndex]}`;
           nextBtn.textContent = `${monthNames[nextMonthIndex]} ›`;
         }
 
         pageFlip.turnToPage(currentMonth);
-        updateUiControls(currentMonth); // Initial update
+        updateUiControls(currentMonth);
 
         pageFlip.on("flip", (e) => {
-          updateUiControls(e.data); // Update on every flip
+          updateUiControls(e.data);
         });
 
         prevBtn.addEventListener("click", () => pageFlip.flipPrev("top"));
         nextBtn.addEventListener("click", () => pageFlip.flipNext("bottom"));
+
+        // --- Share Modal Logic ---
+        function openModal() {
+            const currentUrl = window.location.href;
+            shareLinkInput.value = currentUrl;
+            
+            // Generate QR Code if it doesn't exist
+            if (!qrCode) {
+                 qrCode = new QRCode(qrcodeContainer, {
+                    text: currentUrl,
+                    width: 128,
+                    height: 128,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+            } else {
+                qrCode.clear();
+                qrCode.makeCode(currentUrl);
+            }
+           
+            shareModalOverlay.classList.add('visible');
+            body.classList.add('modal-open');
+        }
+
+        function closeModal() {
+            shareModalOverlay.classList.remove('visible');
+            body.classList.remove('modal-open');
+        }
+
+        openShareBtn.addEventListener('click', openModal);
+        modalCloseBtn.addEventListener('click', closeModal);
+        shareModalOverlay.addEventListener('click', (e) => {
+            if (e.target === shareModalOverlay) {
+                closeModal();
+            }
+        });
+        
+        copyLinkBtn.addEventListener('click', () => {
+            shareLinkInput.select();
+            shareLinkInput.setSelectionRange(0, 99999); 
+            try {
+                document.execCommand('copy');
+                copyLinkBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyLinkBtn.textContent = 'Copy';
+                }, 1500);
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+        });
+
 
         // --- ZOOM DAN PANNING YANG DIPERBAIKI ---
         let zoomLevel = 1;
@@ -365,21 +590,15 @@
         let lastMouseX = window.innerWidth / 2;
         let lastMouseY = window.innerHeight / 2;
 
-        // Track mouse position
-        document.addEventListener(
-          "mousemove",
-          (e) => {
+        document.addEventListener( "mousemove", (e) => {
             if (!body.classList.contains("is-panning")) {
               lastMouseX = e.clientX;
               lastMouseY = e.clientY;
             }
-          },
-          { passive: true }
+          }, { passive: true }
         );
 
-        // Fungsi ini bertugas mengubah teks tombol dari "+" menjadi "-" dan sebaliknya.
         function updateZoomButton() {
-          // Jika level zoom lebih besar dari 1, tombol akan menjadi "-", jika tidak, menjadi "+".
           toggleZoomBtn.textContent = zoomLevel > minZoom ? "-" : "+";
         }
 
@@ -408,7 +627,6 @@
           }
         }
 
-        // Zoom toggle
         toggleZoomBtn.addEventListener("click", () => {
           const isZoomingIn = zoomLevel <= minZoom;
           zoomLevel = isZoomingIn ? maxZoom : minZoom;
@@ -441,9 +659,9 @@
         let isPanning = false;
         let startX, startY, initialLeft, initialTop;
 
-        // Mouse events untuk panning
         function startPan(clientX, clientY) {
           if (zoomLevel <= minZoom) return false;
+          if (shareModalOverlay.classList.contains('visible')) return false; // Disable pan when modal is open
           isPanning = true;
           body.classList.add("is-panning");
           startX = clientX;
@@ -469,9 +687,8 @@
           body.classList.remove("is-panning");
         }
 
-        // Mouse events
         document.addEventListener("mousedown", (e) => {
-          if (e.target.closest(".controls, .bottom-ui-wrapper")) return; // Prevent panning when clicking any bottom UI
+          if (e.target.closest(".controls, .bottom-ui-wrapper, .share-modal")) return;
           if (startPan(e.clientX, e.clientY)) {
             e.preventDefault();
           }
@@ -487,34 +704,26 @@
         document.addEventListener("mouseup", endPan);
         document.addEventListener("mouseleave", endPan);
 
-        // Touch events untuk mobile
-        document.addEventListener(
-          "touchstart",
-          (e) => {
-            if (e.target.closest(".controls, .bottom-ui-wrapper")) return; // Prevent panning when touching any bottom UI
+        document.addEventListener( "touchstart", (e) => {
+            if (e.target.closest(".controls, .bottom-ui-wrapper, .share-modal")) return;
             const touch = e.touches[0];
             if (startPan(touch.clientX, touch.clientY)) {
               e.preventDefault();
             }
-          },
-          { passive: false }
+          }, { passive: false }
         );
 
-        document.addEventListener(
-          "touchmove",
-          (e) => {
+        document.addEventListener( "touchmove", (e) => {
             if (isPanning && e.touches.length === 1) {
               e.preventDefault();
               const touch = e.touches[0];
               updatePan(touch.clientX, touch.clientY);
             }
-          },
-          { passive: false }
+          }, { passive: false }
         );
 
         document.addEventListener("touchend", endPan);
 
-        // Prevent context menu saat panning
         document.addEventListener("contextmenu", (e) => {
           if (isPanning) {
             e.preventDefault();
