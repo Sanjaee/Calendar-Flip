@@ -13,54 +13,64 @@
     <style>
       /* --- Reset dan Pengaturan Dasar --- */
       :root {
-        --controls-height: 80px; /* Variabel untuk tinggi controls bar */
+        --controls-height: 80px;
+      }
+
+      * {
+        box-sizing: border-box;
       }
 
       body {
         font-family: "Inter", sans-serif;
         background-color: #ca262c;
         margin: 0;
-        padding: 2rem 1rem var(--controls-height);
-        box-sizing: border-box;
         min-height: 100vh;
-        overflow: hidden; 
+        padding: 0px 15px;
+        overflow: hidden;
+        position: relative;
       }
 
       /* --- Styling untuk Panning & Zoom --- */
-      
-      /* [PERUBAHAN KUNCI 2] Saat di-zoom, aktifkan overflow agar bisa di-scroll/geser */
       body.is-zoomed {
         cursor: grab;
-        overflow: hidden; /* Izinkan scroll untuk panning */
+        overflow: hidden;
       }
 
       body.is-panning {
-        cursor: grabbing;
-        user-select: none; /* Mencegah seleksi teks saat dragging */
+        cursor: grabbing !important;
+        user-select: none;
       }
 
       .calendar-wrapper {
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: calc(100vh - var(--controls-height) - 4rem);
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
       }
 
       .calendar-container {
         width: 100%;
         max-width: 500px;
         perspective: 2000px;
-        transition: transform 0.3s ease; /* Animasi zoom */
+        transition: transform 0.3s ease;
         transform-origin: center center;
-        /* [PERUBAHAN KUNCI 3] Tambahkan ini agar konten tidak bisa diklik saat zoom */
-        pointer-events: none;
-      }
-      
-      /* Saat tidak di-zoom, aktifkan kembali interaksi */
-      body:not(.is-zoomed) .calendar-container {
-          pointer-events: auto;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
       }
 
+      /* Saat zoom aktif, nonaktifkan semua interaksi dengan konten */
+      body.is-zoomed .calendar-container {
+        pointer-events: none;
+      }
+
+      /* Hanya body yang bisa diklik untuk panning */
+      body.is-zoomed {
+        pointer-events: auto;
+      }
 
       .flip-book {
         width: 100%;
@@ -106,9 +116,10 @@
         box-sizing: border-box;
       }
 
-      .control-btn, .zoom-btn {
-        flex: 1; /* Agar tombol mengisi ruang yang tersedia */
-        max-width: 150px; /* Batas lebar maksimal tombol */
+      .control-btn,
+      .zoom-btn {
+        flex: 1;
+        max-width: 150px;
         padding: 0.75rem;
         font-size: 1rem;
         font-weight: 600;
@@ -125,7 +136,8 @@
         box-sizing: border-box;
       }
 
-      .control-btn:hover, .zoom-btn:hover {
+      .control-btn:hover,
+      .zoom-btn:hover {
         background-color: #f7f7f7;
         border-color: #ccc;
         transform: translateY(-2px);
@@ -133,26 +145,63 @@
           0 4px 6px -2px rgba(0, 0, 0, 0.05);
       }
 
-      .control-btn:active, .zoom-btn:active {
+      .control-btn:active,
+      .zoom-btn:active {
         transform: translateY(0px) scale(0.98);
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
           0 2px 4px -1px rgba(0, 0, 0, 0.04);
       }
-      
+
       .zoom-btn {
-        max-width: 60px; /* Zoom button lebih kecil */
+        max-width: 60px;
         font-size: 1.5rem;
         line-height: 1;
+      }
+
+      .control-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+          0 2px 4px -1px rgba(0, 0, 0, 0.04);
+      }
+      .control-btn:disabled:hover {
+        background-color: #fff;
+        border-color: #ddd;
+      }
+
+      /* Zoom state indicator */
+      .zoom-indicator {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        z-index: 1001;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+      }
+
+      .zoom-indicator.visible {
+        opacity: 1;
       }
     </style>
   </head>
   <body>
+    <div class="zoom-indicator" id="zoom-indicator">
+      Zoom aktif - Geser untuk panning
+    </div>
+
     <div class="calendar-wrapper">
       <div class="calendar-container">
         <div class="flip-book" id="calendar-flipbook"></div>
       </div>
     </div>
-    
+
     <div class="controls">
       <button id="prev-month" class="control-btn"></button>
       <button id="toggle-zoom-btn" class="zoom-btn">+</button>
@@ -166,12 +215,15 @@
         const prevBtn = document.getElementById("prev-month");
         const nextBtn = document.getElementById("next-month");
         const toggleZoomBtn = document.getElementById("toggle-zoom-btn");
+        const zoomIndicator = document.getElementById("zoom-indicator");
         const body = document.body;
-        // [PERUBAHAN KUNCI 4] Gunakan documentElement untuk scrolling yang lebih konsisten
-        const scroller = document.documentElement; 
 
-        const monthNames = [ "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-        const imageUrls = Array.from({ length: 12 }, (_, i) => `calendar/cal${i + 1}.png`);
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+
+        const imageUrls = Array.from(
+          { length: 12 },
+          (_, i) => `calendar/cal${i + 1}.png`
+        );
 
         function generateCalendarPages() {
           for (let month = 0; month < 12; month++) {
@@ -179,7 +231,9 @@
             page.className = "page";
             const pageContent = document.createElement("div");
             pageContent.className = "page-content";
-            const imageUrl = imageUrls[month] || `https://placehold.co/500x700/555/FFF?text=Image+${month + 1}`;
+            const imageUrl =
+              imageUrls[month] ||
+              `https://placehold.co/500x700/ca262c/FFF?text=Bulan+${month + 1}`;
             pageContent.style.backgroundImage = `url('${imageUrl}')`;
             page.appendChild(pageContent);
             flipbookContainer.appendChild(page);
@@ -209,8 +263,12 @@
         const currentMonth = now.getMonth();
 
         function updateButtonLabels(currentPageIndex) {
+          prevBtn.disabled = currentPageIndex === 0;
+          nextBtn.disabled = currentPageIndex === monthNames.length - 1;
+
           const prevMonthIndex = (currentPageIndex - 1 + 12) % 12;
           const nextMonthIndex = (currentPageIndex + 1) % 12;
+
           prevBtn.textContent = `‹ ${monthNames[prevMonthIndex]}`;
           nextBtn.textContent = `${monthNames[nextMonthIndex]} ›`;
         }
@@ -225,82 +283,163 @@
         prevBtn.addEventListener("click", () => pageFlip.flipPrev("top"));
         nextBtn.addEventListener("click", () => pageFlip.flipNext("bottom"));
 
-        // --- FUNGSI ZOOM BARU (TOGGLE) ---
+        // --- ZOOM DAN PANNING YANG DIPERBAIKI ---
         let zoomLevel = 1;
-        const maxZoom = 1.8;
+        const maxZoom = 2;
         const minZoom = 1;
+        let lastMouseX = window.innerWidth / 2;
+        let lastMouseY = window.innerHeight / 2;
 
-        // Fungsi ini sudah benar, untuk mengubah tombol '+' menjadi '−'
-        function updateZoomButton() {
-          if (zoomLevel > minZoom) {
-            toggleZoomBtn.textContent = "−";
-          } else {
-            toggleZoomBtn.textContent = "+";
+        // Track mouse position
+        document.addEventListener('mousemove', (e) => {
+          if (!body.classList.contains('is-panning')) {
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
           }
+        }, { passive: true });
+
+        // Fungsi ini bertugas mengubah teks tombol dari "+" menjadi "-" dan sebaliknya.
+        function updateZoomButton() {
+          // Jika level zoom lebih besar dari 1, tombol akan menjadi "-", jika tidak, menjadi "+".
+          toggleZoomBtn.textContent = zoomLevel > minZoom ? "-" : "+";
         }
 
         function applyZoom() {
-          calendarContainer.style.transform = `scale(${zoomLevel})`;
-          
-          if (zoomLevel > minZoom) {
-            body.classList.add("is-zoomed");
-            // Nonaktifkan flip saat zoom (logika ini sudah benar)
-            pageFlip.setInteractive(false); 
-          } else {
-            body.classList.remove("is-zoomed");
-            // Aktifkan kembali flip (logika ini sudah benar)
-            pageFlip.setInteractive(true); 
-            // Reset scroll position saat zoom out
-            scroller.scrollTo({ top: 0, left: 0 });
-          }
+          // --- PERBAIKAN ---
+          // Memindahkan pembaruan tombol ke bagian atas fungsi.
+          // Ini memastikan tombol akan selalu berubah tampilan (+/-) bahkan jika ada galat
+          // pada baris kode setelahnya, seperti pada pageFlip.setInteractive().
           updateZoomButton();
+
+          if (zoomLevel > minZoom) {
+            calendarContainer.style.transform = `translate(-50%, -50%) scale(${zoomLevel})`;
+            body.classList.add("is-zoomed");
+            try {
+              // Mencoba menonaktifkan flip saat zoom, dibungkus try...catch untuk menangani galat
+              pageFlip.setInteractive(false);
+            } catch (e) {
+              console.error("Gagal menonaktifkan interaksi PageFlip:", e);
+            }
+            zoomIndicator.classList.add("visible");
+          } else {
+            calendarContainer.style.transform = `translate(-50%, -50%) scale(${zoomLevel})`;
+            body.classList.remove("is-zoomed");
+            try {
+              // Mencoba mengaktifkan kembali flip, dibungkus try...catch untuk menangani galat
+              pageFlip.setInteractive(true);
+            } catch (e) {
+              console.error("Gagal mengaktifkan interaksi PageFlip:", e);
+            }
+            zoomIndicator.classList.remove("visible");
+
+            // Reset posisi kalender ke tengah
+            calendarContainer.style.left = '50%';
+            calendarContainer.style.top = '50%';
+          }
         }
 
+        // Zoom toggle
         toggleZoomBtn.addEventListener("click", () => {
-          zoomLevel = zoomLevel > minZoom ? minZoom : maxZoom;
+          const isZoomingIn = zoomLevel <= minZoom;
+
+          if (isZoomingIn) {
+            zoomLevel = maxZoom;
+          } else {
+            zoomLevel = minZoom;
+          }
+
           applyZoom();
         });
 
-        // --- FUNGSI PANNING (GESER) SAAT ZOOM ---
+        // --- PANNING SYSTEM YANG DIPERBAIKI ---
         let isPanning = false;
-        let startX, startY, scrollLeft, scrollTop;
+        let startX, startY, initialLeft, initialTop;
 
-        body.addEventListener('mousedown', (e) => {
-          if (zoomLevel <= minZoom) return;
-          // Jangan mulai panning jika mengklik tombol
-          if (e.target.closest('.controls')) return;
+        // Mouse events untuk panning
+        function startPan(clientX, clientY) {
+          if (zoomLevel <= minZoom) return false;
 
           isPanning = true;
           body.classList.add("is-panning");
-          startX = e.pageX - scroller.offsetLeft;
-          startY = e.pageY - scroller.offsetTop;
-          scrollLeft = scroller.scrollLeft;
-          scrollTop = scroller.scrollTop;
-        });
 
-        // [PERUBAHAN KUNCI 5] Gunakan 'window' untuk event ini agar tetap berfungsi
-        // meskipun kursor keluar dari area body saat menggeser.
-        window.addEventListener('mouseleave', () => {
-          isPanning = false;
-          body.classList.remove("is-panning");
-        });
+          startX = clientX;
+          startY = clientY;
 
-        window.addEventListener('mouseup', () => {
-          isPanning = false;
-          body.classList.remove("is-panning");
-        });
+          // Ambil posisi kalender saat ini
+          const rect = calendarContainer.getBoundingClientRect();
+          initialLeft = parseFloat(calendarContainer.style.left) || 50;
+          initialTop = parseFloat(calendarContainer.style.top) || 50;
 
-        body.addEventListener('mousemove', (e) => {
+          return true;
+        }
+
+        function updatePan(clientX, clientY) {
           if (!isPanning) return;
-          e.preventDefault();
-          const x = e.pageX - scroller.offsetLeft;
-          const y = e.pageY - scroller.offsetTop;
-          const walkX = (x - startX); 
-          const walkY = (y - startY);
-          scroller.scrollLeft = scrollLeft - walkX;
-          scroller.scrollTop = scrollTop - walkY;
+
+          const deltaX = clientX - startX;
+          const deltaY = clientY - startY;
+
+          // Update posisi kalender langsung
+          const newLeft = initialLeft + (deltaX / window.innerWidth) * 100;
+          const newTop = initialTop + (deltaY / window.innerHeight) * 100;
+
+          calendarContainer.style.left = newLeft + '%';
+          calendarContainer.style.top = newTop + '%';
+        }
+
+        function endPan() {
+          isPanning = false;
+          body.classList.remove("is-panning");
+        }
+
+        // Mouse events
+        document.addEventListener("mousedown", (e) => {
+          // Jangan start panning jika klik pada controls
+          if (e.target.closest(".controls")) return;
+
+          if (startPan(e.clientX, e.clientY)) {
+            e.preventDefault();
+          }
+        });
+
+        document.addEventListener("mousemove", (e) => {
+          if (isPanning) {
+            e.preventDefault();
+            updatePan(e.clientX, e.clientY);
+          }
+        });
+
+        document.addEventListener("mouseup", endPan);
+        document.addEventListener("mouseleave", endPan);
+
+        // Touch events untuk mobile
+        document.addEventListener("touchstart", (e) => {
+          if (e.target.closest(".controls")) return;
+
+          const touch = e.touches[0];
+          if (startPan(touch.clientX, touch.clientY)) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+
+        document.addEventListener("touchmove", (e) => {
+          if (isPanning && e.touches.length === 1) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            updatePan(touch.clientX, touch.clientY);
+          }
+        }, { passive: false });
+
+        document.addEventListener("touchend", endPan);
+
+        // Prevent context menu saat panning
+        document.addEventListener("contextmenu", (e) => {
+          if (isPanning) {
+            e.preventDefault();
+          }
         });
       });
     </script>
   </body>
 </html>
+
