@@ -62,6 +62,10 @@
         transform: translate(-50%, -50%);
       }
 
+      .flip-book {
+        margin-bottom: 70px !important;
+      }
+
       /* Saat zoom aktif, nonaktifkan semua interaksi dengan konten */
       body.is-zoomed .calendar-container {
         pointer-events: none;
@@ -103,7 +107,7 @@
       /* --- Bottom Controls Bar --- */
       .controls {
         position: fixed;
-        bottom: 0px;
+        bottom: 30px;
         left: 0;
         width: 100%;
         height: var(--controls-height);
@@ -168,11 +172,11 @@
         font-size: 1.5rem;
         line-height: 1;
       }
-      
+
       .fullscreen-btn svg,
       .download-btn svg {
-          width: 24px;
-          height: 24px;
+        width: 24px;
+        height: 24px;
       }
 
       .control-btn:disabled {
@@ -221,13 +225,63 @@
 
     <div class="controls">
       <button id="prev-month" class="control-btn"></button>
-      <a href="calendar/template-calendar.pdf" download="template-calendar.pdf" class="download-btn" title="Download PDF">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <a
+        href="calendar/template-calendar.pdf"
+        download="template-calendar.pdf"
+        class="download-btn"
+        title="Download PDF"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
       </a>
       <button id="toggle-zoom-btn" class="zoom-btn">+</button>
       <button id="fullscreen-btn" class="fullscreen-btn">
-        <svg id="enter-fullscreen-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-        <svg id="exit-fullscreen-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+        <svg
+          id="enter-fullscreen-icon"
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
+          />
+        </svg>
+        <svg
+          id="exit-fullscreen-icon"
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          style="display: none"
+        >
+          <path
+            d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"
+          />
+        </svg>
       </button>
       <button id="next-month" class="control-btn"></button>
     </div>
@@ -240,12 +294,29 @@
         const nextBtn = document.getElementById("next-month");
         const toggleZoomBtn = document.getElementById("toggle-zoom-btn");
         const fullscreenBtn = document.getElementById("fullscreen-btn");
-        const enterFullscreenIcon = document.getElementById("enter-fullscreen-icon");
-        const exitFullscreenIcon = document.getElementById("exit-fullscreen-icon");
+        const enterFullscreenIcon = document.getElementById(
+          "enter-fullscreen-icon"
+        );
+        const exitFullscreenIcon = document.getElementById(
+          "exit-fullscreen-icon"
+        );
         const zoomIndicator = document.getElementById("zoom-indicator");
         const body = document.body;
 
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+        const monthNames = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "Mei",
+          "Jun",
+          "Jul",
+          "Ags",
+          "Sep",
+          "Okt",
+          "Nov",
+          "Des",
+        ];
 
         const imageUrls = Array.from(
           { length: 12 },
@@ -318,12 +389,16 @@
         let lastMouseY = window.innerHeight / 2;
 
         // Track mouse position
-        document.addEventListener('mousemove', (e) => {
-          if (!body.classList.contains('is-panning')) {
-            lastMouseX = e.clientX;
-            lastMouseY = e.clientY;
-          }
-        }, { passive: true });
+        document.addEventListener(
+          "mousemove",
+          (e) => {
+            if (!body.classList.contains("is-panning")) {
+              lastMouseX = e.clientX;
+              lastMouseY = e.clientY;
+            }
+          },
+          { passive: true }
+        );
 
         // Fungsi ini bertugas mengubah teks tombol dari "+" menjadi "-" dan sebaliknya.
         function updateZoomButton() {
@@ -351,8 +426,8 @@
               console.error("Gagal mengaktifkan interaksi PageFlip:", e);
             }
             zoomIndicator.classList.remove("visible");
-            calendarContainer.style.left = '50%';
-            calendarContainer.style.top = '50%';
+            calendarContainer.style.left = "50%";
+            calendarContainer.style.top = "50%";
           }
         }
 
@@ -371,20 +446,19 @@
             document.exitFullscreen();
           }
         }
-        
+
         function updateFullscreenIcons() {
-            if (document.fullscreenElement) {
-                enterFullscreenIcon.style.display = 'none';
-                exitFullscreenIcon.style.display = 'block';
-            } else {
-                enterFullscreenIcon.style.display = 'block';
-                exitFullscreenIcon.style.display = 'none';
-            }
+          if (document.fullscreenElement) {
+            enterFullscreenIcon.style.display = "none";
+            exitFullscreenIcon.style.display = "block";
+          } else {
+            enterFullscreenIcon.style.display = "block";
+            exitFullscreenIcon.style.display = "none";
+          }
         }
 
         fullscreenBtn.addEventListener("click", toggleFullScreen);
-        document.addEventListener('fullscreenchange', updateFullscreenIcons);
-
+        document.addEventListener("fullscreenchange", updateFullscreenIcons);
 
         // --- PANNING SYSTEM YANG DIPERBAIKI ---
         let isPanning = false;
@@ -409,8 +483,8 @@
           const deltaY = clientY - startY;
           const newLeft = initialLeft + (deltaX / window.innerWidth) * 100;
           const newTop = initialTop + (deltaY / window.innerHeight) * 100;
-          calendarContainer.style.left = newLeft + '%';
-          calendarContainer.style.top = newTop + '%';
+          calendarContainer.style.left = newLeft + "%";
+          calendarContainer.style.top = newTop + "%";
         }
 
         function endPan() {
@@ -437,21 +511,29 @@
         document.addEventListener("mouseleave", endPan);
 
         // Touch events untuk mobile
-        document.addEventListener("touchstart", (e) => {
-          if (e.target.closest(".controls")) return;
-          const touch = e.touches[0];
-          if (startPan(touch.clientX, touch.clientY)) {
-            e.preventDefault();
-          }
-        }, { passive: false });
-
-        document.addEventListener("touchmove", (e) => {
-          if (isPanning && e.touches.length === 1) {
-            e.preventDefault();
+        document.addEventListener(
+          "touchstart",
+          (e) => {
+            if (e.target.closest(".controls")) return;
             const touch = e.touches[0];
-            updatePan(touch.clientX, touch.clientY);
-          }
-        }, { passive: false });
+            if (startPan(touch.clientX, touch.clientY)) {
+              e.preventDefault();
+            }
+          },
+          { passive: false }
+        );
+
+        document.addEventListener(
+          "touchmove",
+          (e) => {
+            if (isPanning && e.touches.length === 1) {
+              e.preventDefault();
+              const touch = e.touches[0];
+              updatePan(touch.clientX, touch.clientY);
+            }
+          },
+          { passive: false }
+        );
 
         document.addEventListener("touchend", endPan);
 
@@ -465,4 +547,3 @@
     </script>
   </body>
 </html>
-
