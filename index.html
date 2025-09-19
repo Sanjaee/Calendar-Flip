@@ -103,7 +103,7 @@
       /* --- Bottom Controls Bar --- */
       .controls {
         position: fixed;
-        bottom: 0;
+        bottom: 0px;
         left: 0;
         width: 100%;
         height: var(--controls-height);
@@ -117,7 +117,9 @@
       }
 
       .control-btn,
-      .zoom-btn {
+      .zoom-btn,
+      .fullscreen-btn,
+      .download-btn {
         flex: 1;
         max-width: 150px;
         padding: 0.75rem;
@@ -134,10 +136,15 @@
           0 2px 4px -1px rgba(0, 0, 0, 0.04);
         transition: all 0.2s ease-in-out;
         box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .control-btn:hover,
-      .zoom-btn:hover {
+      .zoom-btn:hover,
+      .fullscreen-btn:hover,
+      .download-btn:hover {
         background-color: #f7f7f7;
         border-color: #ccc;
         transform: translateY(-2px);
@@ -146,16 +153,26 @@
       }
 
       .control-btn:active,
-      .zoom-btn:active {
+      .zoom-btn:active,
+      .fullscreen-btn:active,
+      .download-btn:active {
         transform: translateY(0px) scale(0.98);
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
           0 2px 4px -1px rgba(0, 0, 0, 0.04);
       }
 
-      .zoom-btn {
+      .zoom-btn,
+      .fullscreen-btn,
+      .download-btn {
         max-width: 60px;
         font-size: 1.5rem;
         line-height: 1;
+      }
+      
+      .fullscreen-btn svg,
+      .download-btn svg {
+          width: 24px;
+          height: 24px;
       }
 
       .control-btn:disabled {
@@ -204,7 +221,14 @@
 
     <div class="controls">
       <button id="prev-month" class="control-btn"></button>
+      <a href="calendar/template-calendar.pdf" download="template-calendar.pdf" class="download-btn" title="Download PDF">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </a>
       <button id="toggle-zoom-btn" class="zoom-btn">+</button>
+      <button id="fullscreen-btn" class="fullscreen-btn">
+        <svg id="enter-fullscreen-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        <svg id="exit-fullscreen-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+      </button>
       <button id="next-month" class="control-btn"></button>
     </div>
 
@@ -215,6 +239,9 @@
         const prevBtn = document.getElementById("prev-month");
         const nextBtn = document.getElementById("next-month");
         const toggleZoomBtn = document.getElementById("toggle-zoom-btn");
+        const fullscreenBtn = document.getElementById("fullscreen-btn");
+        const enterFullscreenIcon = document.getElementById("enter-fullscreen-icon");
+        const exitFullscreenIcon = document.getElementById("exit-fullscreen-icon");
         const zoomIndicator = document.getElementById("zoom-indicator");
         const body = document.body;
 
@@ -305,17 +332,11 @@
         }
 
         function applyZoom() {
-          // --- PERBAIKAN ---
-          // Memindahkan pembaruan tombol ke bagian atas fungsi.
-          // Ini memastikan tombol akan selalu berubah tampilan (+/-) bahkan jika ada galat
-          // pada baris kode setelahnya, seperti pada pageFlip.setInteractive().
           updateZoomButton();
-
           if (zoomLevel > minZoom) {
             calendarContainer.style.transform = `translate(-50%, -50%) scale(${zoomLevel})`;
             body.classList.add("is-zoomed");
             try {
-              // Mencoba menonaktifkan flip saat zoom, dibungkus try...catch untuk menangani galat
               pageFlip.setInteractive(false);
             } catch (e) {
               console.error("Gagal menonaktifkan interaksi PageFlip:", e);
@@ -325,14 +346,11 @@
             calendarContainer.style.transform = `translate(-50%, -50%) scale(${zoomLevel})`;
             body.classList.remove("is-zoomed");
             try {
-              // Mencoba mengaktifkan kembali flip, dibungkus try...catch untuk menangani galat
               pageFlip.setInteractive(true);
             } catch (e) {
               console.error("Gagal mengaktifkan interaksi PageFlip:", e);
             }
             zoomIndicator.classList.remove("visible");
-
-            // Reset posisi kalender ke tengah
             calendarContainer.style.left = '50%';
             calendarContainer.style.top = '50%';
           }
@@ -341,15 +359,32 @@
         // Zoom toggle
         toggleZoomBtn.addEventListener("click", () => {
           const isZoomingIn = zoomLevel <= minZoom;
-
-          if (isZoomingIn) {
-            zoomLevel = maxZoom;
-          } else {
-            zoomLevel = minZoom;
-          }
-
+          zoomLevel = isZoomingIn ? maxZoom : minZoom;
           applyZoom();
         });
+
+        // --- FULLSCREEN ---
+        function toggleFullScreen() {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+          } else if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        }
+        
+        function updateFullscreenIcons() {
+            if (document.fullscreenElement) {
+                enterFullscreenIcon.style.display = 'none';
+                exitFullscreenIcon.style.display = 'block';
+            } else {
+                enterFullscreenIcon.style.display = 'block';
+                exitFullscreenIcon.style.display = 'none';
+            }
+        }
+
+        fullscreenBtn.addEventListener("click", toggleFullScreen);
+        document.addEventListener('fullscreenchange', updateFullscreenIcons);
+
 
         // --- PANNING SYSTEM YANG DIPERBAIKI ---
         let isPanning = false;
@@ -358,31 +393,22 @@
         // Mouse events untuk panning
         function startPan(clientX, clientY) {
           if (zoomLevel <= minZoom) return false;
-
           isPanning = true;
           body.classList.add("is-panning");
-
           startX = clientX;
           startY = clientY;
-
-          // Ambil posisi kalender saat ini
           const rect = calendarContainer.getBoundingClientRect();
           initialLeft = parseFloat(calendarContainer.style.left) || 50;
           initialTop = parseFloat(calendarContainer.style.top) || 50;
-
           return true;
         }
 
         function updatePan(clientX, clientY) {
           if (!isPanning) return;
-
           const deltaX = clientX - startX;
           const deltaY = clientY - startY;
-
-          // Update posisi kalender langsung
           const newLeft = initialLeft + (deltaX / window.innerWidth) * 100;
           const newTop = initialTop + (deltaY / window.innerHeight) * 100;
-
           calendarContainer.style.left = newLeft + '%';
           calendarContainer.style.top = newTop + '%';
         }
@@ -394,9 +420,7 @@
 
         // Mouse events
         document.addEventListener("mousedown", (e) => {
-          // Jangan start panning jika klik pada controls
           if (e.target.closest(".controls")) return;
-
           if (startPan(e.clientX, e.clientY)) {
             e.preventDefault();
           }
@@ -415,7 +439,6 @@
         // Touch events untuk mobile
         document.addEventListener("touchstart", (e) => {
           if (e.target.closest(".controls")) return;
-
           const touch = e.touches[0];
           if (startPan(touch.clientX, touch.clientY)) {
             e.preventDefault();
